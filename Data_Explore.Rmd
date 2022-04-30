@@ -1,0 +1,89 @@
+---
+title: "Data_Exploration"
+author: "Rebecca Sullivan"
+date: "4/29/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if(! require("pacman")) install.packages("pacman")
+
+pacman::p_load(
+  tidyverse,
+  here,
+  lubridate
+)
+
+
+```
+
+What are the recent different trends in weather patterns across these 3 regions that can increase the need for emergency roadside services?  
+   to help distribute resources accordingly in the 3 different areas
+  What sorts of services:  Dead Batteries and Towing
+
+```{r}
+
+weather <- read_csv(here::here("Data", "2938751.csv")) %>% 
+  mutate (Location = NAME ,
+          Year = year(DATE),
+          Month = months(DATE),
+          Quarter = quarters(DATE), 
+          Daily_Temp_Change = TMAM - TMIN)
+
+head(weather)
+
+```
+
+
+
+
+
+
+
+I requested weather data from 3 parts of the country.  I did find some in seperate files on the site, but not all have temperature and precipitation measurements.
+
+need to chec on the meaning of the tavg.  What is that an average of. 
+
+```{r}
+weather %>% 
+  count(Location, Year) 
+
+```
+Full data for 3 recent years from 3 different areas of the country
+All in the footprint of customers that work serves
+
+
+```{r}
+weather %>% 
+  group_by(Location, Year) %>% 
+  summarise( avg_min_temp= mean(TMIN, na.rm = TRUE),
+             min_temo = min(TMIN) ,
+             avg_max_temp = mean(TMAX, na.rm = TRUE),
+             max_temp = max(TMAX)) %>% 
+  ungroup()
+
+
+
+```
+
+
+```{r}
+weather %>% 
+  group_by(Location, Year, Month) %>% 
+  summarise( min_temp= mean(TMIN, na.rm = TRUE),
+             max_temp = mean(TMAX, na.rm = TRUE) ) %>% 
+  ungroup()
+
+
+
+```
+
+
+create a flag when temp is 32 or less
+create a flag when temp is over 90 
+
+
