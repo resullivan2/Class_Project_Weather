@@ -32,7 +32,7 @@ weather <- read_csv(here::here("Data", "2938751.csv")) %>%
           Year = year(DATE),
           Month = months(DATE),
           Quarter = quarters(DATE), 
-          Daily_Temp_Change = TMAM - TMIN)
+          Daily_Temp_Change = TMAX - TMIN)
 
 head(weather)
 
@@ -61,7 +61,7 @@ All in the footprint of customers that work serves
 weather %>% 
   group_by(Location, Year) %>% 
   summarise( avg_min_temp= mean(TMIN, na.rm = TRUE),
-             min_temo = min(TMIN) ,
+             min_temp = min(TMIN) ,
              avg_max_temp = mean(TMAX, na.rm = TRUE),
              max_temp = max(TMAX)) %>% 
   ungroup()
@@ -82,8 +82,29 @@ weather %>%
 
 ```
 
+```{r}
+weather %>% 
+  filter( STATION == "USW00013739") %>% 
+  ggplot( aes ( x = DATE,
+                y = Daily_Temp_Change )) +
+  geom_point()+
+  geom_smooth() +
+  theme_gray()
+
+
+   
+
+
+```
+
+Should trim the 2022 data, since there is not even half of the year to measure yet.
+
+still to graph:
+TMAX TMIN
+
 
 create a flag when temp is 32 or less
 create a flag when temp is over 90 
 
+create groups of temperature 
 
