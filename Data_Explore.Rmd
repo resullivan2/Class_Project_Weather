@@ -21,49 +21,186 @@ pacman::p_load(
 
 ```
 
-What are the recent different trends in weather patterns across these 3 regions that can increase the need for emergency roadside services?  
+What are the recent different trends in weather patterns across these regions that can increase the need for emergency roadside services?  
    to help distribute resources accordingly in the 3 different areas
   What sorts of services:  Dead Batteries and Towing
+  dead batteries can be triggered by temperature changes
 
 ```{r}
 
-weather <- read_csv(here::here("Data", "2938751.csv")) %>% 
-  mutate (Location = NAME ,
-          Year = year(DATE),
-          Month = months(DATE),
-          Quarter = quarters(DATE), 
-          Daily_Temp_Change = TMAX - TMIN)
+weather_1 <- read_csv(here::here("Data", "2938751.csv")) %>% 
+  select (STATION, NAME, LATITUDE, LONGITUDE,  ELEVATION, DATE, PRCP, SNOW, TMAX, TMIN  )
 
-head(weather)
 
+head(weather_1)
+tail(weather_1)
+```
+
+```{r}
+
+weather_2 <- read_csv(here::here("Data", "2966446.csv")) %>% 
+  select (STATION, NAME, LATITUDE, LONGITUDE,  ELEVATION, DATE, PRCP, SNOW, TMAX, TMIN  )
+
+
+
+head(weather_2)
+```
+
+
+```{r}
+
+weather_3 <- read_csv(here::here("Data", "2966466.csv")) %>% 
+  select (STATION, NAME, LATITUDE, LONGITUDE,  ELEVATION, DATE, PRCP, SNOW, TMAX, TMIN  )
+
+
+
+head(weather_3)
 ```
 
 
 
 
+```{r}
+weather <- union (weather_1, weather_2) %>% 
+  union(weather_3) %>% 
+  mutate (Location = NAME ,
+          Year = year(DATE),
+          Month = months(DATE),
+          Quarter = quarters(DATE), 
+          Daily_Temp_Change = TMAX - TMIN) 
+
+head(weather)
+
+
+```
+
+```{r}
+str(weather)
+summary(weather)
+```
+
+```{r}
+weather %>% 
+  count(STATION, Location)
+```
 
 
 
-I requested weather data from 3 parts of the country.  I did find some in seperate files on the site, but not all have temperature and precipitation measurements.
+I requested weather data from 4 parts of the country.  I did find some metrics in separate files on the site, but not all have temperature and precipitation measurements.
 
-need to chec on the meaning of the tavg.  What is that an average of. 
+The first station I found in region 4 with temperature and weather is GOULD 4 in CO.  I also requested data from SD, since that is data is closer to the region serviced.  Based on this exploration, I will only use one of those as the 4th area. 
+
+```{r}
+weather %>% 
+  filter( STATION != 'USC00053446' ) %>% 
+  ggplot(aes ( y = TMAX ,
+               group = Location, 
+               color = Location)) +
+  geom_boxplot(na.rm = T )    +
+  labs(
+        y = "Maximum Daily Temperature in Degrees F" ,
+    title = "Daily Temperature Variation 2019 - 2021" ,
+    subtitle = "by Weather Station",
+    caption = "Data from www.noaa.gov") +
+    theme_gray()  +
+    theme(axis.title = element_text(face = "bold"),
+        axis.text = element_text(face = "italic")  )
+
+
+
+```
+
+```{r}
+weather %>% 
+  filter( STATION != 'USC00053446' ) %>% 
+  ggplot(aes ( y = TMIN,
+               group = Location, 
+               color = Location)) +
+  geom_boxplot(na.rm = T ) +
+      labs(
+        y = "Minimum Daily Temperature in Degrees F" ,
+    title = "Daily Temperature Variation 2019 - 2021" ,
+    subtitle = "by Weather Station",
+    caption = "Data from www.noaa.gov") +
+    theme_gray()  +
+    theme(axis.title = element_text(face = "bold"),
+        axis.text = element_text(face = "italic")  )
+
+
+```
+```{r}
+weather %>% 
+  filter( STATION != 'USC00053446' ) %>% 
+  ggplot(aes ( y = Daily_Temp_Change,
+               group = Location, 
+               color = Location)) +
+  geom_boxplot(na.rm = T ) +
+  labs(
+        y = "Daily Temperature Change in Degrees F" ,
+    title = "Temperature Variation 2019 - 2021" ,
+    subtitle = "by Weather Station",
+    caption = "Data from www.noaa.gov") +
+    theme_gray()  +
+    theme(axis.title = element_text(face = "bold"),
+        axis.text = element_text(face = "italic")  )
+  
+
+```
+
+
 
 ```{r}
 weather %>% 
   count(Location, Year) 
 
 ```
-Full data for 3 recent years from 3 different areas of the country
+```{r}
+weather %>% 
+  count(Location, Year, Month) 
+
+```
+
+Full data for 3 recent years from 3-4 different areas of the country
 All in the footprint of customers that work serves
 
+Keep only the 3 full years of measures, and add flags for below freezing and above 90
+```{r}
+ 
+  weather %>% 
+  filter( Year %in% c(2019, 2020, 2021)) %>% 
+  mutate( cold_flag = if_else(condition = TMIN <= 32, 
+                                  true = T, 
+                                  false = F, 
+                              missing = NA)   ) %>%
+    mutate( hot_flag = if_else(condition = TMAX >= 90, 
+                                  true = T, 
+                                  false = F, 
+                              missing = NA) ) %>% 
+  count(cold_flag, hot_flag) 
+
+weather <-
+  weather %>% 
+  filter( Year %in% c(2019, 2020, 2021)) %>% 
+  mutate( cold_flag = if_else(condition = TMIN <= 32, 
+                                  true = T, 
+                                  false = F, 
+                              missing = NA)   ) %>%
+    mutate( hot_flag = if_else(condition = TMAX >= 90, 
+                                  true = T, 
+                                  false = F, 
+                              missing = NA) ) 
+
+head(weather)
+```
+does not appear we have any extreme days that have a low less than 32 and a high above 90, at least not in this data. 
 
 ```{r}
 weather %>% 
   group_by(Location, Year) %>% 
   summarise( avg_min_temp= mean(TMIN, na.rm = TRUE),
-             min_temp = min(TMIN) ,
+             min_temp = min(TMIN, na.rm = TRUE) ,
              avg_max_temp = mean(TMAX, na.rm = TRUE),
-             max_temp = max(TMAX)) %>% 
+             max_temp = max(TMAX, na.rm = TRUE)) %>% 
   ungroup()
 
 
@@ -81,14 +218,44 @@ weather %>%
 
 
 ```
+All stations
+```{r}
+weather %>% 
+  ggplot( aes ( x = DATE,
+                y = Daily_Temp_Change )) +
+  geom_point(na.rm = TRUE)+
+  geom_smooth(na.rm = TRUE) +
+  theme_gray()
 
+
+   
+
+
+```
+one station
 ```{r}
 weather %>% 
   filter( STATION == "USW00013739") %>% 
   ggplot( aes ( x = DATE,
                 y = Daily_Temp_Change )) +
-  geom_point()+
-  geom_smooth() +
+  geom_point(na.rm = TRUE)+
+  geom_smooth(na.rm = TRUE) +
+  theme_gray()
+
+
+   
+
+
+```
+as expected, there is not much difference throughout the year.  A little bit of a pattern, which appears to be seasonal.  Zoom in on 1 year to check that. 
+
+```{r}
+weather %>% 
+  filter( STATION == "USW00013739" & Year == 2020) %>% 
+  ggplot( aes ( x = DATE,
+                y = Daily_Temp_Change )) +
+  geom_point(na.rm = TRUE)+
+  geom_smooth(na.rm = TRUE) +
   theme_gray()
 
 
@@ -97,14 +264,203 @@ weather %>%
 
 ```
 
-Should trim the 2022 data, since there is not even half of the year to measure yet.
+
+```{r, warning=FALSE}
+weather %>% 
+  filter( STATION == "USW00013739") %>% 
+  ggplot( aes ( x = DATE,
+                y = TMAX )) +
+  geom_point(na.rm = TRUE)+
+  geom_smooth(na.rm = TRUE) +
+  theme_gray()
+
+
+```
+TMAX is in cycles also, as expected.  Hot in summer and cold in winter. 
+
+  
+```{r}
+weather %>% 
+  filter( STATION == "USW00013739") %>% 
+  filter( is.na(TMAX) == FALSE) %>% 
+  ggplot( aes ( x = DATE,
+                y = TMAX )) +
+  geom_col() +
+  theme_gray()
+```
+Pivot so we can graph min and max for same day, in different colors
+and stack.
+
+adjust the labels, the fill in the legend
+add caption about location of data
+(maybe write this as a function since we want to show multiple stations, or try facet grid)
+
+```{r}
+weather %>% 
+  filter( STATION == "USW00013739") %>% 
+  filter( is.na(TMAX) == FALSE & is.na(TMIN) == FALSE) %>% 
+  pivot_longer(starts_with("TM"),
+               names_to = "type" ) %>% 
+  ggplot( aes ( x = DATE,
+                y = value, 
+                fill = type)) +
+  geom_col(position = "stack") +
+  labs(
+            x = "Date" ,
+        y = "Temperature in Degrees F" ,
+    fill = "Daily Max or Min",
+    title = "Temperature Variation by Date 2019 - 2021" ,
+    subtitle = "4 Locations Combined",
+    caption = "Data from www.noaa.gov") +
+    theme_light()  +
+    theme(axis.title = element_text(face = "bold"),
+        axis.text = element_text(face = "italic")  )
+  
+```
+```{r}
+graph_temps <- function ( df,
+               Station_code ="USW00013739" )
+{ 
+  df %>% 
+  filter( STATION == Station_code) %>% 
+  filter( is.na(TMAX) == FALSE & is.na(TMIN) == FALSE) %>% 
+  pivot_longer(starts_with("TM"),
+               names_to = "type" ) %>% 
+  ggplot( aes ( x = DATE,
+                y = value, 
+                fill = type, 
+                group= Location)) +
+  geom_col(position = "stack") +
+  labs(
+            x = "Date" ,
+            y = "Temperature in Degrees F" ,
+    fill = "Daily Max or Min",
+    title = "Temperature Variation by Date 2019 - 2021" ,
+    caption = "Data from www.noaa.gov") +
+    theme_light()  +
+    theme(axis.title = element_text(face = "bold"),
+        axis.text = element_text(face = "italic")  ) +
+    facet_grid(~Location)
+
+}
+
+```
+
+will need source(here::here("functions.R"))
+
+
+ seemed hard to read with a facet, trying with a function to make each individually
+```{r}
+
+
+weather %>% 
+graph_temps(Station_code ="USW00013739")
+
+
+weather %>% 
+graph_temps(Station_code ="USC00396427")
+
+weather %>% 
+graph_temps(Station_code ="USW00013967")
+
+
+weather %>% 
+graph_temps(Station_code ="USW00093812")
+```
+Look at the number of above 90 and below 32
+Note different times of year that have more extremes in each region  (3)
+     bar or col???
+
+```{r}
+hot_flag
+
+cold_flag
+
+
+```
+ 
+ 
+
+
+
+
+
+
+
+lag? change from 1 day to the next.  especially if 1 day is below 32 or above 90/  (5)
+
+
+Is longitude or elevation more correlated with extreme temperatures??
+
+```{r}
+grah number of extremes
+
+
+weather %>% 
+  filter( is.na(TMAX) == FALSE ) %>% 
+  ggplot( aes ( y = TMAX ,
+               x = LONGITUDE
+                
+               )) +
+  geom_point() +
+  geom_smooth() +
+  labs(
+            x = "Date" ,
+        y = "Temperature in Degrees F" ,
+    fill = "Daily Max or Min",
+    title = "Temperature Variation by Date 2019 - 2021" ,
+    subtitle = "4 Locations Combined",
+    caption = "Data from www.noaa.gov") +
+    theme_light()  +
+    theme(axis.title = element_text(face = "bold"),
+        axis.text = element_text(face = "italic")  )
+
+
+
+
+```
+
+
+
+
+
 
 still to graph:
 TMAX TMIN
 
-
-create a flag when temp is 32 or less
-create a flag when temp is over 90 
-
 create groups of temperature 
 
+is there enought climate change to reconsider our stratefy?
+(maybe look at the same stations in 1990s or 1980s)  => scatter plot
+are high or low temps actaully corrolated to the year?
+number of extremes correlated??
+
+
+
+
+```{r}
+weather %>% 
+  filter( STATION != 'USC00053446' ) %>% 
+  group_by(Location ) %>% 
+  ggplot(aes ( x = DATE,
+                y = SNOW,
+               group = Location, 
+               color = Location)) +
+  geom_boxplot(na.rm = T )
+
+
+```
+
+
+
+```{r}
+weather %>% 
+  filter( STATION != 'USC00053446' ) %>% 
+  group_by(Location ) %>% 
+  ggplot(aes ( x = DATE,
+                y = PRCP,
+               group = Location, 
+               color = Location)) +
+  geom_boxplot(na.rm = T )
+
+```
