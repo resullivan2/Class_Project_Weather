@@ -1,0 +1,415 @@
+---
+title: "Weather Data Project"
+author: "Rebecca Sullivan"
+date: "5/6/2022"
+output: 
+  html_document:
+    theme: spacelab
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, include = FALSE}
+if(! require("pacman")) install.packages("pacman")
+
+pacman::p_load(
+  tidyverse,
+  here,
+  lubridate
+)
+
+source(here::here ("Scripts", "functions.R") )
+
+```
+
+# About
+This analysis focuses on weather that can lead to car batteries not holding enough charge to start a car (ie. dead car batteries).  Both extreme heat and extreme cold can put stress on a car battery and cause it to not hold enough charge to power an ignition start.  The goal is to anticipate the need to batteries and jump start services in the right locations.  Car batteries recharge slower below 32 degrees and high temperatures reduce the life of a battery (every 15 degrees F over 77, battery life is cut in half).  
+
+Weather stations with temperature readings were needed in different parts of the country.  Four stations were selected that had the needed information.  And they can all be serviced by the same battery and jump start service entity.
+
+Finding weather stations with temperature data was more of a challenge then anticipated. Though most weather reports include high and low foretasted temperatures, the available data often only had wind speed and precipitation. Custom data was requested for stations that should inlcude temperature data. 
+
+## Question
+* Are there differences in the temperature trends in these 4 areas of the country that indicate supplies and staffing trends should be different throughout the year?
+
+
+# Data
+
+### Csv files were requested from the National Oceanic and Atmospheric Administration data page: https://www.ncdc.noaa.gov/cdo-web/
+
+```{r,  message = FALSE}
+weather_1 <- read_csv(here::here("Data", "2938751.csv")) %>% 
+  select (STATION, NAME, LATITUDE, LONGITUDE,  ELEVATION, DATE, PRCP, SNOW, TMAX, TMIN  )
+
+weather_3 <- read_csv(here::here("Data", "2966466.csv")) %>% 
+  select (STATION, NAME, LATITUDE, LONGITUDE,  ELEVATION, DATE, PRCP, SNOW, TMAX, TMIN  )
+
+
+weather <- union (weather_1, weather_3) %>% 
+  mutate (Location = NAME ,
+          Year = year(DATE),
+          Month = months(DATE),
+          Month_num = month(DATE, label = FALSE) ,
+          Quarter = quarters(DATE), 
+          Daily_Temp_Change = TMAX - TMIN  ) %>% 
+  #flags to indicate extreme hot or cold temps
+  mutate( cold_flag = if_else(condition = TMIN <= 32, 
+                                  true = T, 
+                                  false = F, 
+                              missing = NA)  ,
+           hot_flag = if_else(condition = TMAX >= 90, 
+                                  true = T, 
+                                  false = F, 
+                              missing = NA))  %>% 
+  #comparing the temperature change over multiples days
+  mutate( Temp_1Week_diff = abs(TMIN  - lag(TMAX, n = 7)),
+          Temp_2day_diff = abs(TMIN - lag(TMAX , n=1)))  %>% 
+  filter(Year %in% c(2019, 2020, 2021))
+
+
+```
+
+
+
+```{r}
+weather %>% 
+  count(STATION, LATITUDE, LONGITUDE, ELEVATION, Location)
+
+weather %>% 
+  count(Location, Year) 
+
+```
+Temperature measures are available for the state of SD, OK, OH and PA. Only full year data will be used, for 2019, 2020 and 2021. 
+
+Note that the PA and OH stations have similar Latitude, but not elevation. 
+
+## Temperature Variation
+
+```{r}
+weather %>% 
+  ggplot(aes ( y = TMAX ,
+               group = Location, 
+               color = Location)) +
+  geom_boxplot(na.rm = T )    +
+  labs(
+        y = "Maximum Daily Temperature in Degrees F" ,
+    title = "Daily Temperature Variation 2019 - 2021" ,
+    subtitle = "by Weather Station",
+    caption = "Data from www.noaa.gov") +
+    theme_gray()  +
+    theme(axis.title = element_text(face = "bold"),
+        axis.text = element_text(face = "italic") ,
+         axis.text.x = element_blank( ) )
+
+```
+
+
+
+
+
+
+The median high temperatures for all weather stations are between 60 degrees and 75 degrees.  The station in OK has some of the highest temperatures. OH and PA stations had similar distribution of measures, which makes sense this they are the most similar geographically.  
+
+
+```{r}
+weather %>% 
+  ggplot(aes ( y = TMIN,
+               group = Location, 
+               color = Location)) +
+  geom_boxplot(na.rm = T ) +
+      labs(
+        y = "Minimum Daily Temperature in Degrees F" ,
+    title = "Daily Temperature Variation 2019 - 2021" ,
+    subtitle = "by Weather Station",
+    caption = "Data from www.noaa.gov") +
+    theme_gray()  +
+    theme(axis.title = element_text(face = "bold"),
+        axis.text = element_text(face = "italic") ,
+        axis.text.x = element_blank( ) )
+
+```
+
+
+
+
+
+
+
+The median low temperatures for all weather stations are between 28 degrees and 50 degrees.  The station in SD has some of the lowest temperatures.  The OK station also has some low temperatures, but some of those are labeled as outliers. OH and PA stations are not as close in distribution on low temperatures.  Based on this, it is likely that all 4 area may need a different battery plan related to weather. 
+
+
+
+# Varation over Time
+
+
+## Daily Differences
+### Max and Min per day
+```{r}
+
+weather %>% 
+graph_temps(Station_code ="USW00013739")
+
+
+weather %>% 
+graph_temps(Station_code ="USC00396427")
+
+weather %>% 
+graph_temps(Station_code ="USW00013967")
+
+
+weather %>% 
+graph_temps(Station_code ="USW00093812")
+```
+
+
+
+
+Looking at each station individually, the high and low temperatures do seem to cycle with the seasons.  Not seeing anything in the past 3 years that shows highs and lows don't follow the same general pattern.  But there are min temperatures below 32 and highs above 90, and those together in the same year contribute to battery wear. 
+
+
+### Daily Change and Weekly Change
+
+```{r}
+weather %>% 
+  ggplot(aes ( y = Daily_Temp_Change,
+               group = Location, 
+               color = Location)) +
+  geom_boxplot(na.rm = T ) +
+  labs(
+        y = "Daily Temperature Change in Degrees F" ,
+    title = "Temperature Variation 2019 - 2021" ,
+    subtitle = "by Weather Station",
+    caption = "Data from www.noaa.gov") +
+    theme_gray()  +
+    theme(axis.title = element_text(face = "bold"),
+        axis.text = element_text(face = "italic") ,
+        axis.text.x = element_blank( ) )
+```
+
+
+
+
+
+
+
+The difference between the max and min temperature for any day is 20 - 30 degrees on average, except for the PA station which is lower.  None of the measures, even the outliers were more than 50 degrees difference. So we will not see any days where the max is above 90 and the low is below 32.  However, the next metric to check is if that could occur over 2 consecutive days, or over a week. 
+
+### Change over 2 days and 7 days
+
+```{r, warning=FALSE}
+weather %>% 
+  ggplot(aes( x = DATE,
+              y =Temp_2day_diff, 
+              color = Location)) +
+  geom_point(na.rm = TRUE) +
+  geom_hline( aes(yintercept = 60)) +
+  geom_hline( aes(yintercept = 50)) +
+      labs(
+        y = "Two Day Change in Degrees" ,
+    title = "Two Day Temperature Change in Degrees F" ,
+    subtitle = "Temperature Variation 2019 - 2021",
+    color = "Weather Station Location",
+    caption = "Data from www.noaa.gov")
+
+
+weather %>% 
+  ggplot(aes( x = DATE,
+              y =Temp_1Week_diff, 
+              color = Location)) +
+  geom_point(na.rm = TRUE) +
+  geom_hline( aes(yintercept = 60)) +
+  geom_hline( aes(yintercept = 50)) +
+  theme_light() +
+    labs(
+        y = "One Week Change in Degrees" ,
+    title = "One Week Temperature Change in Degrees F" ,
+    subtitle = "Temperature Variation 2019 - 2021",
+    color = "Weather Station Location",
+    caption = "Data from www.noaa.gov") 
+```
+ 
+ 
+comments about where extreme temperature days occur close in time.
+ 
+ 
+ 
+##Number of Extreme Temperature Days
+
+```{r, warning=FALSE, message = FALSE  }
+weather %>% 
+  count(cold_flag, hot_flag) 
+  
+  
+weather %>% 
+    group_by(Location, Year) %>% 
+  summarise( num_hot_days = sum(as.numeric(hot_flag)),
+             num_cold_days = sum(as.numeric(cold_flag))) %>% 
+  ungroup() %>% 
+  ggplot( aes ( x =Year ,
+                 y=  num_hot_days,
+                color = Location,
+                fill = Location)) +
+  geom_col(position = "dodge") +
+  theme(legend.position = "bottom" ,
+        legend.direction = "vertical") +
+      labs(
+        y = "Number of Extreme Hot Days" ,
+    title = "Number of Extreme Hot Days Per Year, by Location" ,
+    caption = "Data from www.noaa.gov")
+
+
+```
+
+
+
+```{r,  warning=FALSE, message = FALSE  }
+weather %>% 
+  group_by(Location, Year) %>% 
+  summarise( num_hot_days = sum(as.numeric(hot_flag)),
+             num_cold_days = sum(as.numeric(cold_flag))) %>% 
+  ungroup() %>% 
+  ggplot( aes ( x =Year ,
+                 y=  num_cold_days,
+                color = Location,
+                fill = Location)) +
+  geom_col(position = "dodge") +
+  theme(legend.position = "bottom" ,
+        legend.direction = "vertical")
+
+
+
+```
+
+
+
+```{r, warning=FALSE, message=FALSE}
+weather %>% 
+  group_by(Location, Year, Quarter ) %>% 
+  summarise( num_hot_days = sum(as.numeric(hot_flag)),
+             num_cold_days = sum(as.numeric(cold_flag))) %>% 
+  ungroup() %>% 
+  ggplot( aes ( x = Quarter,
+                 y=  num_cold_days,
+                color = Location,
+                fill = Location) ) +
+  geom_col(position = "dodge", na.rm = TRUE) +
+  theme(legend.position = "bottom" ,
+        legend.direction = "vertical",
+        )
+
+
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+weather %>% 
+  group_by(Location, Year, Quarter ) %>% 
+  summarise( num_hot_days = sum(as.numeric(hot_flag)),
+             num_cold_days = sum(as.numeric(cold_flag))) %>% 
+  ungroup() %>% 
+  ggplot( aes ( x = Quarter,
+                 y=  num_hot_days,
+                color = Location,
+                fill = Location) ) +
+  geom_col(position = "dodge", na.rm = TRUE) +
+  theme(legend.position = "bottom" ,
+        legend.direction = "vertical",
+        )
+```
+
+Comment about where and when  the extreme hot and cold days are in each area
+
+
+
+
+## Correlation between area and temperature
+
+
+```{r, warning=FALSE, error=FALSE, message=FALSE}
+weather %>% 
+  group_by(STATION,LATITUDE, Year) %>% 
+  summarise( num_hot_days = sum(as.numeric(hot_flag)),
+             num_cold_days = sum(as.numeric(cold_flag))) %>% 
+  pivot_longer( starts_with("num_"),
+               names_to = "type" ) %>% 
+  ungroup() %>% 
+  ggplot( aes ( x = LATITUDE,
+                y = value,
+                color = type
+               )) +
+  geom_point() +
+  geom_smooth(na.rm = TRUE) +
+  labs(
+            x = "Latitude" ,
+        y = "Days Above 90 Degrees and Below Freezing" ,
+    title = "Temperature from 2019 - 2021" ,
+    subtitle = "Comparing Number of Extreme days to Latitude",
+    caption = "Data from www.noaa.gov") +
+    theme_light()  +
+    theme(axis.title = element_text(face = "bold"),
+        axis.text = element_text(face = "italic")  )
+```
+
+
+```{r, warning=FALSE, error=FALSE, message=FALSE}
+weather %>% 
+  group_by(STATION,ELEVATION, Year) %>% 
+  summarise( num_hot_days = sum(as.numeric(hot_flag)),
+             num_cold_days = sum(as.numeric(cold_flag))) %>% 
+  pivot_longer( starts_with("num_"),
+               names_to = "type" ) %>% 
+  ungroup() %>% 
+  ggplot( aes ( x = ELEVATION,
+                y = value,
+                color = type
+               )) +
+  geom_point() +
+  geom_smooth(na.rm = TRUE) +
+  labs(
+            x = "Elevation" ,
+        y = "Days Above 90 Degrees and Below Freezing" ,
+    title = "Temperature from 2019 - 2021" ,
+    subtitle = "Comparing Number of Extreme days to Elevation",
+    caption = "Data from www.noaa.gov") +
+    theme_light()  +
+    theme(axis.title = element_text(face = "bold"),
+        axis.text = element_text(face = "italic")  )
+```
+
+
+
+Need to write about the differences by latitude and elevation, which are not the only things that determine weather
+
+
+
+# Conclusion
+Need to write something here
+
+
+
+# Next Steps
+Use more temperature data points to determine if the patterns above are trends or just outliers. 
+
+
+*   Acquire more temperature readings from the 4 states already listed
+
+    * Use the same Time Frame
+
+    * Explore other data sources besides NOAA
+    
+    * this will help show 
+
+*   Gather data from the same stations from earlier years: 1979 - 1981, 1998 - 1991, 1999 - 2001
+
+    * Add these to the current analysis and check if the same patterns hold
+
+    * View each decade separately and check for different patterns
+    
+    * this will 
+
