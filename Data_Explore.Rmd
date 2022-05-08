@@ -108,6 +108,12 @@ weather %>%
         axis.text = element_text(face = "italic")  )
 
 
+  weather %>% 
+  filter( STATION != 'USC00053446' ) %>% 
+  ggplot( aes ( x =  TMAX )) +
+  geom_histogram(na.rm = TRUE)+
+  theme_bw()
+
 
 ```
 
@@ -122,6 +128,14 @@ weather %>%
         y = "Minimum Daily Temperature in Degrees F" ,
     title = "Daily Temperature Variation 2019 - 2021" ) +
     theme_gray()  
+
+
+  weather %>% 
+  filter( STATION != 'USC00053446' ) %>% 
+  ggplot( aes ( x =  TMIN )) +
+  geom_histogram(na.rm = TRUE)+
+  theme_bw()
+
 
 
 ```
@@ -213,6 +227,14 @@ weather %>%
 ```
 All stations
 ```{r}
+
+   weather %>% 
+  ggplot( aes ( x =  Daily_Temp_Change )) +
+  geom_histogram(na.rm = TRUE)+
+  theme_bw()
+
+
+
 weather %>% 
   ggplot( aes ( x = DATE,
                 y = Daily_Temp_Change )) +
@@ -227,6 +249,13 @@ weather %>%
 ```
 one station
 ```{r}
+   weather %>% 
+  filter( STATION == "USW00013739") %>% 
+  ggplot( aes ( x =  Daily_Temp_Change )) +
+  geom_histogram(na.rm = TRUE)+
+  theme_bw()
+
+
 weather %>% 
   filter( STATION == "USW00013739") %>% 
   ggplot( aes ( x = DATE,
@@ -236,7 +265,6 @@ weather %>%
   theme_gray()
 
 
-   
 
 
 ```
@@ -689,14 +717,10 @@ weather %>%
 
 
 
-still to graph:
-TMAX TMIN
 
-create groups of temperature 
-
-is there enought climate change to reconsider our stratefy?
+is there enough climate change to reconsider our strategy?
 (maybe look at the same stations in 1990s or 1980s)  => scatter plot
-are high or low temps actaully corrolated to the year?
+are high or low temps actually correlated to the year?
 number of extremes correlated??
 
 

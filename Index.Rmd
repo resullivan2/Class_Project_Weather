@@ -29,11 +29,11 @@ source(here::here ("Scripts", "functions.R") )
 ```
 
 # About
-This analysis focuses on weather that can lead to car batteries not holding enough charge to start a car (ie. dead car batteries).  Both extreme heat and extreme cold can put stress on a car battery and cause it to not hold enough charge to power an ignition start.  The goal is to anticipate the need to batteries and jump start services in the right locations.  Car batteries recharge slower below 32 degrees and high temperatures reduce the life of a battery (every 15 degrees F over 77, battery life is cut in half).  
+This analysis focuses on weather that can lead to car batteries not holding enough charge to start a car (ie. dead car batteries).  Both extreme heat and extreme cold can put stress on a car battery and cause it to not hold enough charge to power an ignition start.  The goal is to anticipate the need to batteries and jump start services in the right locations. 
 
-Weather stations with temperature readings were needed in different parts of the country.  Four stations were selected that had the needed information.  And they can all be serviced by the same battery and jump start service entity.
+Car batteries recharge slower below 32 degrees and high temperatures reduce the life of a battery (every 15 degrees F over 77, battery life is cut in half).  
 
-Finding weather stations with temperature data was more of a challenge then anticipated. Though most weather reports include high and low foretasted temperatures, the available data often only had wind speed and precipitation. Custom data was requested for stations that should inlcude temperature data. 
+Weather stations with temperature readings were needed in different parts of the USA.  Four stations were selected that had the needed information.  And they can all be serviced by the same battery and jump start service entity. Finding weather stations with temperature data was more of a challenge then anticipated. Though most weather reports include high and low foretasted temperatures, the available data often only had wind speed and precipitation. Custom data was requested for stations that should include temperature readings. 
 
 ## Question
 * Are there differences in the temperature trends in these 4 areas of the country that indicate supplies and staffing trends should be different throughout the year?
@@ -89,7 +89,7 @@ Temperature measures are available for the state of SD, OK, OH and PA. Only full
 
 Note that the PA and OH stations have similar Latitude, but not elevation. 
 
-## Temperature Variation
+# Temperature Variation
 
 ```{r}
 weather %>% 
@@ -141,15 +141,16 @@ weather %>%
 
 
 
-The median low temperatures for all weather stations are between 28 degrees and 50 degrees.  The station in SD has some of the lowest temperatures.  The OK station also has some low temperatures, but some of those are labeled as outliers. OH and PA stations are not as close in distribution on low temperatures.  Based on this, it is likely that all 4 area may need a different battery plan related to weather. 
+The median low temperatures for all weather stations are between 28 degrees and 50 degrees.  The station in SD has some of the lowest temperatures.  The OK station also has some low temperatures, but some of those are labeled as outliers. OH and PA stations are not as close in distribution on low temperatures. Based on this, it is likely that all 4 areas may need a different battery plan related to weather. 
 
 
 
-# Varation over Time
+
+# Variation over Time
 
 
 ## Daily Differences
-### Max and Min per day
+### Max and Min Trend
 ```{r}
 
 weather %>% 
@@ -170,10 +171,10 @@ graph_temps(Station_code ="USW00093812")
 
 
 
-Looking at each station individually, the high and low temperatures do seem to cycle with the seasons.  Not seeing anything in the past 3 years that shows highs and lows don't follow the same general pattern.  But there are min temperatures below 32 and highs above 90, and those together in the same year contribute to battery wear. 
+Since the temperatures are stacked, only the minimum temperature can be easily read from the grapgh.  But the trends are clear for both min and max temperatures.  Looking at each station individually, the high and low temperatures do seem to cycle with the seasons.  Not seeing anything in the past 3 years that shows highs and lows don't follow the same general pattern.  But there are min temperatures below 32 and highs above 90. Those together in the same year contribute to battery wear and dead batteries.
 
 
-### Daily Change and Weekly Change
+### Daily Temp Change
 
 ```{r}
 weather %>% 
@@ -209,8 +210,10 @@ weather %>%
               color = Location)) +
   geom_point(na.rm = TRUE) +
   geom_hline( aes(yintercept = 60)) +
-  geom_hline( aes(yintercept = 50)) +
-      labs(
+  geom_hline( aes(yintercept = 50) , 
+              color = "orange") +
+  theme_gray() +
+  labs(
         y = "Two Day Change in Degrees" ,
     title = "Two Day Temperature Change in Degrees F" ,
     subtitle = "Temperature Variation 2019 - 2021",
@@ -224,8 +227,9 @@ weather %>%
               color = Location)) +
   geom_point(na.rm = TRUE) +
   geom_hline( aes(yintercept = 60)) +
-  geom_hline( aes(yintercept = 50)) +
-  theme_light() +
+  geom_hline( aes(yintercept = 50),
+              color = "orange") +
+  theme_gray() +
     labs(
         y = "One Week Change in Degrees" ,
     title = "One Week Temperature Change in Degrees F" ,
@@ -235,12 +239,13 @@ weather %>%
 ```
  
  
-comments about where extreme temperature days occur close in time.
- 
- 
- 
-##Number of Extreme Temperature Days
 
+South Dakota and Oklahoma weather stations had more of the weather trends where the high and low over several days were far enough apart to cause extra battery stress. The other 2 stations did have a few such trends, but based on this SD and OK are places to check into futher and prepare for more battery wear. 
+ 
+ 
+# Number of Extreme Temp Days
+
+## Per Station, Per Year
 ```{r, warning=FALSE, message = FALSE  }
 weather %>% 
   count(cold_flag, hot_flag) 
@@ -256,15 +261,19 @@ weather %>%
                 color = Location,
                 fill = Location)) +
   geom_col(position = "dodge") +
+  theme_bw() +
   theme(legend.position = "bottom" ,
         legend.direction = "vertical") +
       labs(
-        y = "Number of Extreme Hot Days" ,
+        y = "Number of Extreme Days" ,
     title = "Number of Extreme Hot Days Per Year, by Location" ,
     caption = "Data from www.noaa.gov")
 
 
 ```
+
+
+Based on the previous graphs, the extreme hot flag and extreme cold flag are not expected on the same day.  But when looking at the number of extreme hot days, OK has the most.  The PA and OH have the next highest count for hot days.  More data will be needed to determine if those 2 areas should be treated the same, but the OK area is clearly different. 
 
 
 
@@ -279,14 +288,26 @@ weather %>%
                 color = Location,
                 fill = Location)) +
   geom_col(position = "dodge") +
+  theme_bw() +
   theme(legend.position = "bottom" ,
-        legend.direction = "vertical")
+        legend.direction = "vertical") +
+      labs(
+        y = "Number of Extreme Days" ,
+    title = "Number of Extreme Hot Days Per Year, by Location" ,
+    caption = "Data from www.noaa.gov")
 
 
 
 ```
 
 
+
+The station in SD was missing measures for 2019, but had the highest number of cold days in 2020 and 2021.  The OH station had the next highest number of hot days.  
+
+The SD and OK stations need to be checked based on 1 extreme day,  The OH station does not have the highest or lowest temperatures, but there is enough variation between hot and cold that there could be more need for batteries there.  
+
+
+## Timing During the Year
 
 ```{r, warning=FALSE, message=FALSE}
 weather %>% 
@@ -299,12 +320,22 @@ weather %>%
                 color = Location,
                 fill = Location) ) +
   geom_col(position = "dodge", na.rm = TRUE) +
+  theme_minimal() +
   theme(legend.position = "bottom" ,
         legend.direction = "vertical",
-        )
+        axis.text = element_text(face = "italic") ) +
+  labs(
+        y = "Number of Extreme Days" ,
+    title = "Number of Extreme Cold Days Per Quarter, by Location" ,
+    caption = "Data from www.noaa.gov")
+
 
 
 ```
+
+
+
+Only SD had a significant number of cold days in Q2.  All stations had extreme temperatures in Q1, and most have at least a trend for cold days in Q4. 
 
 
 ```{r, warning=FALSE, message=FALSE}
@@ -318,17 +349,25 @@ weather %>%
                 color = Location,
                 fill = Location) ) +
   geom_col(position = "dodge", na.rm = TRUE) +
+  theme_minimal() +
   theme(legend.position = "bottom" ,
         legend.direction = "vertical",
-        )
+        axis.text = element_text(face = "italic") ) +
+  labs(
+        y = "Number of Extreme Days" ,
+    title = "Number of Extreme Hot Days Per Quarter, by Location" ,
+    caption = "Data from www.noaa.gov")
+
 ```
 
-Comment about where and when  the extreme hot and cold days are in each area
 
 
+Q3 is where most stations see their hottest days.  the OK and PA stations also had hot days in Q2. This again shows that not all the areas have the same weather timing, at least not for the temperatures which can damage car batteries. 
 
 
-## Correlation between area and temperature
+# Correlation
+
+## Between area and temperature
 
 
 ```{r, warning=FALSE, error=FALSE, message=FALSE}
@@ -384,17 +423,18 @@ weather %>%
 
 
 
-Need to write about the differences by latitude and elevation, which are not the only things that determine weather
-
+These weather stations where in different parts of the country, so they were not expected to all follow the same trends. Several characteristics about the 4 areas were compared.  It appears that the Latitude and the Elevation may have a larger effect on temperature trends. 
 
 
 # Conclusion
-Need to write something here
+There are enought differences in high and low temperatures trends that show that car batteries may fail at different rates and at different times in those 4 areas of the country.  
+
+
 
 
 
 # Next Steps
-Use more temperature data points to determine if the patterns above are trends or just outliers. 
+Use more data points to determine if the patterns above are trends or just outliers. 
 
 
 *   Acquire more temperature readings from the 4 states already listed
@@ -403,7 +443,7 @@ Use more temperature data points to determine if the patterns above are trends o
 
     * Explore other data sources besides NOAA
     
-    * this will help show 
+    * this will help show if trends in 2019 - 2021 are reproducible
 
 *   Gather data from the same stations from earlier years: 1979 - 1981, 1998 - 1991, 1999 - 2001
 
@@ -411,5 +451,11 @@ Use more temperature data points to determine if the patterns above are trends o
 
     * View each decade separately and check for different patterns
     
-    * this will 
+    * This will show if the areas were different over time, and show if there have been changes since 1979
+    
+* Gather battery sales data and jump start data
+
+  * Check if the trends in OK, SD and OH followed the extreme hot and cold days
+  
+  * Adjust resource plan for each area according to the weather and battery trends
 

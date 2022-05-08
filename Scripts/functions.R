@@ -16,7 +16,7 @@ graph_temps <- function ( df,
     geom_col(position = "stack") +
     labs(
       x = "Date" ,
-      y = "Temperature in Degrees F" ,
+      y = "Min Temperature in Degrees F" ,
       fill = "Daily Max or Min",
       title = "Temperature Variation by Date 2019 - 2021" ,
       caption = "Data from www.noaa.gov") +

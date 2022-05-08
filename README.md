@@ -28,3 +28,4 @@ https://www.chapelhilltire.com/does-the-cold-weather-kill-your-car-battery/
 
 ## How to Run this code
 
+The custom data files are provided in the Data folder, but this can also be repeated with other data from the same stations or different stations.  Data cleaning is included in the index.Rmd code.  One function is needed for graphing, and it is located in the Scripts folder. 
