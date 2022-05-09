@@ -29,11 +29,11 @@ source(here::here ("Scripts", "functions.R") )
 ```
 
 # About
-This analysis focuses on weather that can lead to car batteries not holding enough charge to start a car (ie. dead car batteries).  Both extreme heat and extreme cold can put stress on a car battery and cause it to not hold enough charge to power an ignition start.  The goal is to anticipate the need to batteries and jump start services in the right locations. 
+This analysis focuses on weather that can lead to car batteries not holding enough charge to start a car (ie. dead car batteries).  Both extreme heat and extreme cold can put stress on a car battery and cause it to not hold enough charge to power an ignition start. The goal is to anticipate the need to batteries and jump start services in the right locations. 
 
-Car batteries recharge slower below 32 degrees and high temperatures reduce the life of a battery (every 15 degrees F over 77, battery life is cut in half).  
+Car batteries recharge slower below 32 degrees F and high temperatures reduce the life of a battery (every 15 degrees F over 77, battery life is cut in half).  
 
-Weather stations with temperature readings were needed in different parts of the USA.  Four stations were selected that had the needed information.  And they can all be serviced by the same battery and jump start service entity. Finding weather stations with temperature data was more of a challenge then anticipated. Though most weather reports include high and low foretasted temperatures, the available data often only had wind speed and precipitation. Custom data was requested for stations that should include temperature readings. 
+Weather stations with temperature readings were needed in different parts of the USA.  Four stations were selected that had the needed information.  And they can all be serviced by the same battery and jump start service entity. Finding weather stations with temperature data was more of a challenge then anticipated. Though most weather reports include high and low forecast temperatures, the available data often only had wind speed and precipitation. Custom data was requested from NOAA for stations that should include temperature readings. 
 
 ## Question
 * Are there differences in the temperature trends in these 4 areas of the country that indicate supplies and staffing trends should be different throughout the year?
@@ -171,7 +171,7 @@ graph_temps(Station_code ="USW00093812")
 
 
 
-Since the temperatures are stacked, only the minimum temperature can be easily read from the grapgh.  But the trends are clear for both min and max temperatures.  Looking at each station individually, the high and low temperatures do seem to cycle with the seasons.  Not seeing anything in the past 3 years that shows highs and lows don't follow the same general pattern.  But there are min temperatures below 32 and highs above 90. Those together in the same year contribute to battery wear and dead batteries.
+Since the temperatures are stacked, only the minimum temperature can be easily read from the graph. But the trends are clear for both min and max temperatures. Looking at each station individually, the high and low temperatures do seem to cycle with the seasons. Not seeing anything in the past 3 years that shows highs and lows don't follow the same general pattern. But there are min temperatures below 32 and highs above 90. Those facts together in the same year contribute to battery wear and dead batteries.
 
 
 ### Daily Temp Change
@@ -199,7 +199,7 @@ weather %>%
 
 
 
-The difference between the max and min temperature for any day is 20 - 30 degrees on average, except for the PA station which is lower.  None of the measures, even the outliers were more than 50 degrees difference. So we will not see any days where the max is above 90 and the low is below 32.  However, the next metric to check is if that could occur over 2 consecutive days, or over a week. 
+The difference between the max and min temperature for any day is 20 - 30 degrees on average, except for the PA station which is even smaller. None of the measures, even the outliers, were more than 50 degrees difference. So we will not see any days where the max is above 90 and the low is below 32. However, the next metric to check is if that could occur over 2 consecutive days, or over a week. 
 
 ### Change over 2 days and 7 days
 
