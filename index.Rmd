@@ -423,11 +423,11 @@ weather %>%
 
 
 
-These weather stations where in different parts of the country, so they were not expected to all follow the same trends. Several characteristics about the 4 areas were compared.  It appears that the Latitude and the Elevation may have a larger effect on temperature trends. 
+These weather stations where in different parts of the country, so they were not expected to all follow the same trends.Several characteristics about the 4 areas were compared.  It appears that the Latitude and the Elevation may have a larger effect on temperature trends. 
 
 
 # Conclusion
-There are enought differences in high and low temperatures trends that show that car batteries may fail at different rates and at different times in those 4 areas of the country.  
+There are enough differences in high and low temperatures trends that show that car batteries may fail at different rates and at different times in those 4 areas of the country.  
 
 
 
